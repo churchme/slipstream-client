@@ -1,0 +1,11 @@
+{
+  "id": "com.woodhouse.slipstream",
+  "version": "1.0.18",
+  "vendor": "",
+  "type": "web",
+  "main": "index.html",
+  "title": "SlipStream",
+  "icon": "icon.png",
+  "largeIcon": "largeIcon.png",
+  "requiredPermissions": ["internet", "network.query"]
+}

@@ -1,0 +1,70 @@
+<!--
+Copyright (c) 2024 LG Electronics Inc.
+
+SPDX-License-Identifier: Apache-2.0
+-->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <link rel="stylesheet" href="css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Slipstream</title>
+    <style type="text/css">
+        body {
+            width: 100%;
+            height: 100%;
+            background-color: #202020;
+        }
+
+        div {
+            position: absolute;
+            height: 100%;
+            width: 100%;
+            display: table;
+        }
+
+        h1 {
+            display: table-cell;
+            vertical-align: middle;
+            text-align: center;
+            color: #FFFFFF;
+        }
+
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Search Section -->
+        <header class="search-area">
+            <input 
+                type="text" 
+                id="search-input" 
+                placeholder="Search movies or shows..." 
+                tabindex="0"
+            >
+            <button id="search-button" tabindex="0">Search</button>
+        </header>
+
+        <!-- Main Content Area -->
+        <main id="results-list" class="results-grid">
+            <!-- This will be populated by app.js -->
+            <div class="welcome-message">
+                <h2>Welcome to Slipstream</h2>
+                <p>Use the search bar above to find content.</p>
+            </div>
+        </main>
+    </div>
+    <div id="debug-box" style="position:fixed; top:0; left:0; width:500px; height:100%; background:rgba(0,0,0,0.9); border-right:2px solid #0f0; z-index:9999; overflow-y:auto;">
+        <table id="debug-table" style="width:100%; border-collapse:collapse; color:#0f0; font-family:monospace; font-size:16px;">
+            <!-- New logs will be inserted here -->
+        </table>
+    </div>
+</body>
+
+<script src="webOSTVjs-1.2.13/webOSTV.js" charset="utf-8"></script>
+<script src="webOSTVjs-1.2.13/webOSTV-dev.js" charset="utf-8"></script>
+<script src="js/slipstream.js" charset="utf-8"></script>
+</html>
