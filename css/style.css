@@ -8,15 +8,15 @@ body {
 
 body, .container, #results-list {
     display: block !important;
+    height: auto !important;
     width: 100%;
     margin: 0;
     padding: 0;
 }
 
-/* Main Container - Widened to fit 10 items comfortably */
+/* Main Container */
 .container {
     width: 100%;
-    max-width: 1800px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -24,11 +24,18 @@ body, .container, #results-list {
 
 /* Search Area: Top Center with Margin */
 .search-area {
-    display: flex;
-    margin: 40px auto;
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
+    height: 150px;
+    background: #0f0f0f;
+    display: flex;
     justify-content: center;
+    align-items: center;
     gap: 15px;
+    z-index: 1000;
+    border-bottom: 1px solid #333;
 }
 
 /* Search Input: Large and readable */
@@ -71,22 +78,24 @@ body, .container, #results-list {
 
 /* Results Grid */
 .results-grid {
-    text-align: left;
+    text-align: center;
+    width: 100%;
+    margin-top: 150px;
     padding: 20px;
+    padding-bottom: 50px;
     display: block !important;
 }
 
 /* Movie Card Style */
 .movie-card {
-    /* Treat cards like words in a sentence */
     display: inline-block !important; 
     position: relative !important;
-    width: 170px !important;
-    height: 280px !important;
-    margin: 10px !important;
-    border-radius: 12px;
+    width: 320px !important;
+    height: 520px !important;
+    margin: 20px !important;
+    border-radius: 15px;
     background: #1e1e1e;
-    border: 3px solid transparent;
+    border: 4px solid transparent;
     transition: transform 0.2s;
     vertical-align: top;
     overflow: hidden;
@@ -94,7 +103,7 @@ body, .container, #results-list {
 
 .movie-card img {
     width: 100% !important;
-    height: 200px !important;
+    height: 420px !important;
     object-fit: cover;
     display: block;
 }
@@ -104,11 +113,9 @@ body, .container, #results-list {
 }
 
 .card-info h4 {
-    margin: 0 0 8px 0;
-    font-size: 18px;
-    height: 22px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
+    font-size: 22px;
+    height: 28px;
+    margin: 10px 0;
 }
 
 .card-info p {

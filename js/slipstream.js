@@ -90,6 +90,7 @@ document.addEventListener('keydown', (e) => {
     const active = document.activeElement;
     const cards = Array.from(document.querySelectorAll('.movie-card'));
     const currentIndex = cards.indexOf(active);
+    const cols = 5;
 
     switch (e.key) {
         case 'ArrowDown':
@@ -146,8 +147,16 @@ document.addEventListener('keydown', (e) => {
             break;
 
         case 'Enter':
-            if (active.id === 'search-button') {
+            if (active.id === 'search-button' || active.id === 'search-input') {
                 performSearch();
+            }
+            break;
+
+        case 'Back':
+            if (currentIndex !== -1) {
+                e.preventDefault();
+                document.getElementById('search-input').focus();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
             break;
     }
