@@ -1,20 +1,22 @@
 /* Base Reset and TV Background */
 body {
-    background-color: #0f0f0f; /* Deep black for OLEDs */
+    background-color: #0f0f0f;
     color: #ffffff;
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    overflow-x: hidden;
 }
 
-/* Main Container */
+body, .container, #results-list {
+    display: block !important;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+/* Main Container - Widened to fit 10 items comfortably */
 .container {
     width: 100%;
-    max-width: 1200px;
+    max-width: 1800px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -22,12 +24,11 @@ body {
 
 /* Search Area: Top Center with Margin */
 .search-area {
-    margin-top: 50px;
-    margin-bottom: 40px;
     display: flex;
-    gap: 15px;
+    margin: 40px auto;
     width: 100%;
     justify-content: center;
+    gap: 15px;
 }
 
 /* Search Input: Large and readable */
@@ -49,7 +50,7 @@ body {
     padding: 0 40px;
     font-size: 24px;
     border-radius: 35px;
-    background: #cc0000; /* YouTube-style Red */
+    background: #cc0000;
     color: white;
     border: 3px solid transparent;
     cursor: pointer;
@@ -63,53 +64,56 @@ body {
 .nav-button:focus {
     outline: none;
     border-color: #ffffff !important;
-    transform: scale(1.05); /* Slight "pop" on focus */
+    transform: scale(1.05);
+    z-index: 100;
     box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
 }
 
 /* Results Grid */
 .results-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 30px;
+    text-align: left;
     padding: 20px;
-    padding-bottom: 170px; 
-    width: 100%;
+    display: block !important;
 }
 
 /* Movie Card Style */
 .movie-card {
-    width: 240px;
-    background: #1e1e1e;
+    /* Treat cards like words in a sentence */
+    display: inline-block !important; 
+    position: relative !important;
+    width: 170px !important;
+    height: 280px !important;
+    margin: 10px !important;
     border-radius: 12px;
-    overflow: hidden;
+    background: #1e1e1e;
     border: 3px solid transparent;
     transition: transform 0.2s;
+    vertical-align: top;
+    overflow: hidden;
 }
 
 .movie-card img {
-    width: 100%;
-    aspect-ratio: 2/3;
+    width: 100% !important;
+    height: 200px !important;
     object-fit: cover;
     display: block;
 }
 
 .card-info {
-    padding: 15px;
+    padding: 18px;
 }
 
 .card-info h4 {
     margin: 0 0 8px 0;
     font-size: 18px;
+    height: 22px;
     white-space: nowrap;
-    overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .card-info p {
-    margin: 0;
-    font-size: 14px;
+    margin: 4px 0 0 0;
+    font-size: 11px;
     color: #aaa;
 }
 
@@ -138,38 +142,9 @@ body {
 
 /* Welcome/Status Messages */
 .welcome-message {
+    display: block;
+    width: 100%;
     text-align: center;
     margin-top: 100px;
     color: #888;
-}
-
-#debug-log {
-    position: fixed;
-    top: 20%;
-    left: 20px;
-    width: 400px;
-    height: 50%;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid #00ff00;
-    z-index: 10000;
-    overflow-y: auto;
-    pointer-events: none; /* Allows remote clicks to pass through to UI */
-}
-
-#debug-list {
-    list-style: none;
-    margin: 0;
-    padding: 10px;
-    display: flex;
-    flex-direction: column; /* Force vertical stacking */
-}
-
-#debug-list li {
-    color: #00ff00;
-    font-family: monospace;
-    font-size: 16px;
-    margin-bottom: 8px;
-    border-bottom: 1px solid #333;
-    word-wrap: break-word;
-    display: block; /* Ensure it takes its own line */
 }

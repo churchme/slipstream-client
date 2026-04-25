@@ -61,7 +61,7 @@ const performSearch = async () => {
             logDebug(`Loaded ${data.length} items`);
             resultsList.innerHTML = data.map(item => `
                 <div class="movie-card" tabindex="0" onclick="playVideo('${item.href}')">
-                    <img src="${item.image}" alt="${item.title}" style="width: 100%;">
+                    <img src="${item.image}" alt="${item.title}">
                     <div class="card-info">
                         <h4>${item.title}</h4>
                     <p>${item.quality} | ${item.metadata}</p>
@@ -88,35 +88,68 @@ document.getElementById('search-button').addEventListener('click', performSearch
 // Keyboard & D-Pad Logic
 document.addEventListener('keydown', (e) => {
     const active = document.activeElement;
+    const cards = Array.from(document.querySelectorAll('.movie-card'));
+    const currentIndex = cards.indexOf(active);
 
-    // Handle Search Submission
-    if (e.key === 'Enter' && active.id === 'search-input') {
-        performSearch();
-    }
+    switch (e.key) {
+        case 'ArrowDown':
+            if (active.id === 'search-input' || active.id === 'search-button') {
+                if (cards.length > 0) {
+                    e.preventDefault();
+                    cards[0].focus();
+                    cards[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            } else if (currentIndex !== -1) {
+                const nextIndex = currentIndex + cols;
+                if (cards[nextIndex]) {
+                    e.preventDefault();
+                    cards[nextIndex].focus();
+                    cards[nextIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
+            }
+            break;
 
-    // webOS Remote Specifics
-    // 461 is the standard 'Back' keycode for LG remotes
-    if (e.key === 'Back' || e.keyCode === 461 || e.key === 'Escape') {
-        // If a video is playing, go back to search. Otherwise, webOS handles app exit.
-        if (document.getElementById('main-player')) {
-            e.preventDefault();
-            location.reload();
-        }
-    }
-});
+        case 'ArrowUp':
+            if (currentIndex !== -1) {
+                const prevIndex = currentIndex - cols;
+                if (prevIndex >= 0) {
+                    e.preventDefault();
+                    cards[prevIndex].focus();
+                    cards[prevIndex].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                } else {
+                    e.preventDefault();
+                    document.getElementById('search-input').focus();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+            break;
 
-document.getElementById('search-input').addEventListener('keydown', (e) => {
-    const input = e.target;
-    // If user presses Right at the end of the text, move focus to the button
-    if (e.key === 'ArrowRight' && input.selectionStart === input.value.length) {
-        document.getElementById('search-button').focus();
-    }
-});
+        case 'ArrowRight':
+            if (active.id === 'search-input') {
+                // Focus button if at end of text
+                if (active.selectionStart === active.value.length) {
+                    document.getElementById('search-button').focus();
+                }
+            } else if (currentIndex !== -1 && cards[currentIndex + 1]) {
+                e.preventDefault();
+                cards[currentIndex + 1].focus();
+            }
+            break;
 
-// Also allow moving back to the input from the button
-document.getElementById('search-button').addEventListener('keydown', (e) => {
-    if (e.key === 'ArrowLeft') {
-        document.getElementById('search-input').focus();
+        case 'ArrowLeft':
+            if (active.id === 'search-button') {
+                document.getElementById('search-input').focus();
+            } else if (currentIndex !== -1 && cards[currentIndex - 1]) {
+                e.preventDefault();
+                cards[currentIndex - 1].focus();
+            }
+            break;
+
+        case 'Enter':
+            if (active.id === 'search-button') {
+                performSearch();
+            }
+            break;
     }
 });
 
