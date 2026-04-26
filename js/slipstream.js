@@ -60,10 +60,8 @@ async function showDetails(path, element) {
     element.classList.add('selected-for-details');
     document.querySelector('.container').classList.add('blurred');
     
-    // Add the panel to HTML if it doesn't exist
     panel.className = '';
     panel.classList.add(col > 3 ? 'panel-left' : 'panel-right');
-    panel.classList.add('active'); 
 
     try {
         const response = await fetch(`${API_BASE}/details?path=${encodeURIComponent(path)}`);
@@ -72,16 +70,25 @@ async function showDetails(path, element) {
         logDebug(`Response Status: ${response.status}`);
 
         panel.innerHTML = `
-            <div class="details-content">
-                <h1>${data.title}</h1>
-                <p>${data.description}</p>
-                <ul class="metadata-list">
-                    <li><strong>Genres:</strong> ${data.genres}</li>
-                    <li><strong>Released:</strong> ${data.released}</li>
-                    <li><strong>Cast:</strong> ${data.casts}</li>
-                </ul>
+            <div class="details-header">
+                <button id="watch-now" class="watch-now-btn" tabindex="0">WATCH NOW</button>
+                <span class="details-title">${data.title}</span>
             </div>
-            <button id="watch-now" class="watch-now-btn" tabindex="0">WATCH NOW</button>
+
+            <div class="details-body">
+                <p class="details-desc">${data.description}</p>
+            </div>
+
+            <div class="details-meta-row">
+                <div class="meta-item"><strong>Genre:</strong> ${data.genres || 'N/A'}</div>
+                <div class="meta-item"><strong>Released:</strong> ${data.released || 'N/A'}</div>
+                <div class="meta-item"><strong>Cast:</strong> ${data.casts || 'N/A'}</div>
+            </div>
+
+            <div id="selectors-area">
+                <div id="server-picker"></div>
+                <div id="episode-picker"></div>
+            </div>
         `;
 
         // Activate panel and blur background
@@ -263,14 +270,6 @@ function closeDetails(currentIndex) {
         card.classList.remove('selected-for-details')
         card.focus()
     }
-    
-    // document.querySelector('.container').classList.remove('blurred');
-    // document.getElementById('details-panel').style.display = 'none';
-
-    // document.querySelectorAll('.selected-for-details').forEach(el => el.classList.remove('selected-for-details'));
-    // Return focus to the movie card that was originally selected
-    // const cards = Array.from(document.querySelectorAll('.movie-card'));
-    // cards[currentIndex].focus();
 }
 
 // Auto-focus search on launch

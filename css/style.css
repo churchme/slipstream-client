@@ -18,11 +18,6 @@ html, body {
     width: 100%;
 }
 
-/* Blur the search results when active */
-/*.container.blurred {
-    filter: blur(10px);
-    pointer-events: none;
-}*/
 .container.blurred .search-area,
 .container.blurred .results-grid > div:not(.selected-for-details) {
     filter: blur(12px);
@@ -73,57 +68,92 @@ html, body {
 #details-panel {
     position: fixed;
     top: 0;
-    width: 600px;
+    width: 33%;
     height: 100%;
-    background: rgba(15, 15, 15, 0.98);
+    background: #0a0a0a;
     z-index: 2000;
-    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    padding: 50px;
-    box-shadow: 0 0 50px rgba(0,0,0,0.8);
-    display: none;
+    transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    padding: 0;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
+    display: block !important;
+    box-sizing: border-box;
 }
 
-#details-panel.panel-left { 
-    display: block;
+#details-panel.panel-left {
     left: 0;
     transform: translateX(-100%);
-    border-right: 2px solid #cc0000;
+    border-right: 3px solid #cc0000;
 }
 
 #details-panel.panel-right {
-    display: block;
     right: 0;
     transform: translateX(100%);
-    border-left: 2px solid #cc0000;
+    border-left: 3px solid #cc0000;
 }
 
 #details-panel.active {
-    display: block !important;
     transform: translateX(0) !important;
 }
 
-.details-content h1 {
+.details-header {
+    flex: 0 0 130px;
+    display: flex;
+    padding: 25px;
+    justify-content: center;
+    align-items: top;
+    gap: 15px;
+    background: #151515;
+    border-bottom: 2px solid #333;
+}
+
+.details-title {
+    text-align: center;
+    text-align-last: center;
+    margin-right: 25px;
     font-size: 32px;
     color: #cc0000;
-    margin-bottom: 20px;
+    line-height: 1.2;
+    font-weight: bold;
 }
 
-.details-content p {
-    color: #ccc;
+.details-body {
+    position: absolute;
+    top: 170px;
+    left: 40px;
+    right: 40px;
+    display: block !important;
+}
+
+.details-desc {
+    font-size: 20px;
+    line-height: 1.5;
+    color: #ddd;
+    margin: 0;
+}
+
+.details-meta-row {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px;
+}
+
+.meta-item {
+    display: block !important;
+    width: 100%;
+    min-height: 35px;
     font-size: 18px;
-    line-height: 1.4;
-}
-
-.metadata-list {
-    margin-top: 20px;
-    font-size: 14px;
     color: #888;
-    list-style: none;
-    padding: 0;
+    position: relative !important;
 }
 
-.metadata-list li {
-    margin-bottom: 10px;
+#selectors-area {
+    position: absolute;
+    top: 580px;
+    left: 40px;
+    right: 40px;
+    border-top: 1px solid #333;
+    padding-top: 20px;
+    overflow-y: auto; 
 }
 
 /* Spatial Navigation: Highlight focused elements */
