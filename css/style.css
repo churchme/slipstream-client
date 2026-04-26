@@ -73,10 +73,10 @@ html, body {
     background: #0a0a0a;
     z-index: 2000;
     transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
-    padding: 0;
-    box-shadow: 0 0 50px rgba(0,0,0,0.9);
-    display: block !important;
+    display: flex !important;
+    flex-direction: column;
     box-sizing: border-box;
+    box-shadow: 0 0 50px rgba(0,0,0,0.9);
 }
 
 #details-panel.panel-left {
@@ -96,12 +96,12 @@ html, body {
 }
 
 .details-header {
-    flex: 0 0 130px;
+    flex: 0 0 auto;
+    padding: 30px;
     display: flex;
-    padding: 25px;
-    justify-content: center;
-    align-items: top;
-    gap: 15px;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 20px;
     background: #151515;
     border-bottom: 2px solid #333;
 }
@@ -109,51 +109,46 @@ html, body {
 .details-title {
     text-align: center;
     text-align-last: center;
-    margin-right: 25px;
-    font-size: 32px;
+    font-size: 28px;
     color: #cc0000;
-    line-height: 1.2;
     font-weight: bold;
+    line-height: 1.2;
+    margin: 0;
+    text-align: left;
 }
 
 .details-body {
-    position: absolute;
-    top: 170px;
-    left: 40px;
-    right: 40px;
-    display: block !important;
+    flex: 1;
+    padding: 30px 40px;
+    overflow-y: auto;
+    display: flex !important;
+    flex-direction: column;
+    gap: 25px;
 }
 
 .details-desc {
     font-size: 20px;
-    line-height: 1.5;
+    line-height: 1.6;
     color: #ddd;
-    margin: 0;
 }
 
 .details-meta-row {
     display: flex !important;
     flex-direction: column !important;
-    gap: 10px;
+    gap: 12px;
+    padding-top: 15px;
+    border-top: 1px solid #222;
 }
 
 .meta-item {
-    display: block !important;
-    width: 100%;
-    min-height: 35px;
-    font-size: 18px;
+    font-size: 16px;
     color: #888;
-    position: relative !important;
 }
 
 #selectors-area {
-    position: absolute;
-    top: 580px;
-    left: 40px;
-    right: 40px;
-    border-top: 1px solid #333;
+    margin-top: 20px;
     padding-top: 20px;
-    overflow-y: auto; 
+    border-top: 1px solid #333;
 }
 
 /* Spatial Navigation: Highlight focused elements */

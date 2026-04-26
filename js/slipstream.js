@@ -70,24 +70,24 @@ async function showDetails(path, element) {
         logDebug(`Response Status: ${response.status}`);
 
         panel.innerHTML = `
-            <div class="details-header">
+            <header class="details-header">
                 <button id="watch-now" class="watch-now-btn" tabindex="0">WATCH NOW</button>
-                <span class="details-title">${data.title}</span>
-            </div>
+                <h1 class="details-title">${data.title}</h1>
+            </header>
 
             <div class="details-body">
                 <p class="details-desc">${data.description}</p>
-            </div>
+                
+                <div class="details-meta-row">
+                    <div class="meta-item"><strong>Genre:</strong> ${data.genres || 'N/A'}</div>
+                    <div class="meta-item"><strong>Released:</strong> ${data.released || 'N/A'}</div>
+                    <div class="meta-item"><strong>Cast:</strong> ${data.casts || 'N/A'}</div>
+                </div>
 
-            <div class="details-meta-row">
-                <div class="meta-item"><strong>Genre:</strong> ${data.genres || 'N/A'}</div>
-                <div class="meta-item"><strong>Released:</strong> ${data.released || 'N/A'}</div>
-                <div class="meta-item"><strong>Cast:</strong> ${data.casts || 'N/A'}</div>
-            </div>
-
-            <div id="selectors-area">
-                <div id="server-picker"></div>
-                <div id="episode-picker"></div>
+                <div id="selectors-area">
+                    <div id="server-picker"></div>
+                    <div id="episode-picker"></div>
+                </div>
             </div>
         `;
 
