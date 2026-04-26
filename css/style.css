@@ -1,41 +1,45 @@
 /* Base Reset and TV Background */
-body {
-    background-color: #0f0f0f;
-    color: #ffffff;
+html, body {
     font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     align-items: center;
-}
-
-body, .container, #results-list {
-    display: block !important;
-    height: auto !important;
-    width: 100%;
+    background-color: #0f0f0f;
+    color: #ffffff;
+    height: 100%;
     margin: 0;
     padding: 0;
+    overflow: hidden;
+    background-color: #0f0f0f;
 }
 
-/* Main Container */
 .container {
-    width: 100%;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    height: 100vh;
+    width: 100%;
+}
+
+/* Blur the search results when active */
+/*.container.blurred {
+    filter: blur(10px);
+    pointer-events: none;
+}*/
+.container.blurred .search-area,
+.container.blurred .results-grid > div:not(.selected-for-details) {
+    filter: blur(12px);
+    opacity: 0.3;
+    pointer-events: none;
 }
 
 /* Search Area: Top Center with Margin */
 .search-area {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 150px;
-    background: #0f0f0f;
+    flex: 0 0 130px;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 15px;
-    z-index: 1000;
-    border-bottom: 1px solid #333;
+    background: #151515;
+    border-bottom: 2px solid #333;
+    width: 100%;
 }
 
 /* Search Input: Large and readable */
@@ -52,7 +56,8 @@ body, .container, #results-list {
 }
 
 /* Search Button */
-#search-button {
+#search-button,
+.watch-now-btn {
     height: 70px;
     padding: 0 40px;
     font-size: 24px;
@@ -64,9 +69,67 @@ body, .container, #results-list {
     transition: all 0.2s ease-in-out;
 }
 
+/* Container for the overlay */
+#details-panel {
+    position: fixed;
+    top: 0;
+    width: 600px;
+    height: 100%;
+    background: rgba(15, 15, 15, 0.98);
+    z-index: 2000;
+    transition: all 0.4s cubic-bezier(0.165, 0.84, 0.44, 1);
+    padding: 50px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.8);
+    display: none;
+}
+
+#details-panel.panel-left { 
+    display: block;
+    left: 0;
+    transform: translateX(-100%);
+    border-right: 2px solid #cc0000;
+}
+
+#details-panel.panel-right {
+    display: block;
+    right: 0;
+    transform: translateX(100%);
+    border-left: 2px solid #cc0000;
+}
+
+#details-panel.active {
+    display: block !important;
+    transform: translateX(0) !important;
+}
+
+.details-content h1 {
+    font-size: 32px;
+    color: #cc0000;
+    margin-bottom: 20px;
+}
+
+.details-content p {
+    color: #ccc;
+    font-size: 18px;
+    line-height: 1.4;
+}
+
+.metadata-list {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #888;
+    list-style: none;
+    padding: 0;
+}
+
+.metadata-list li {
+    margin-bottom: 10px;
+}
+
 /* Spatial Navigation: Highlight focused elements */
-#search-input:focus, 
-#search-button:focus, 
+#search-input:focus,
+#search-button:focus,
+.watch-now-btn:focus,
 .movie-card:focus,
 .nav-button:focus {
     outline: none;
@@ -78,11 +141,11 @@ body, .container, #results-list {
 
 /* Results Grid */
 .results-grid {
-    text-align: center;
-    width: 100%;
-    margin-top: 150px;
+    flex: 1;
+    overflow-y: auto;
     padding: 20px;
-    padding-bottom: 50px;
+    margin-top: 20px;
+    text-align: center;
     display: block !important;
 }
 
@@ -106,6 +169,15 @@ body, .container, #results-list {
     height: 420px !important;
     object-fit: cover;
     display: block;
+}
+
+.movie-card.selected-for-details {
+    z-index: 2100 !important;
+    transform: scale(1.15) !important;
+    border-color: #00ff00 !important;
+    box-shadow: 0 0 30px rgba(0,255,0,0.5);
+    filter: none !important;
+    opacity: 1 !important;
 }
 
 .card-info {

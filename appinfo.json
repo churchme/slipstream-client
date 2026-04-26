@@ -1,11 +1,12 @@
 {
   "id": "com.woodhouse.slipstream",
-  "version": "1.0.28",
+  "version": "1.0.37",
   "vendor": "",
   "type": "web",
   "main": "index.html",
   "title": "SlipStream",
   "icon": "icon.png",
   "largeIcon": "largeIcon.png",
+  "disableBackHistoryAPI": true,
   "requiredPermissions": ["internet", "network.query"]
 }
