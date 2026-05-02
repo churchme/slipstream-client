@@ -151,6 +151,80 @@ html, body {
     border-top: 1px solid #333;
 }
 
+.selector-label {
+    font-size: 18px;
+    color: #cc0000;
+    margin: 20px 0 10px 0;
+    font-weight: bold;
+}
+
+.season-row {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding-bottom: 10px;
+}
+
+.season-btn, .episode-btn {
+    background: #222;
+    color: #eee;
+    border: 2px solid transparent;
+    border-radius: 5px;
+    padding: 10px 15px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.episode-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.episode-btn {
+    text-align: left;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+
+.episode-btn span.ep-num {
+    color: #cc0000;
+    margin-right: 10px;
+}
+
+.season-btn:focus, .episode-btn:focus {
+    background: #444;
+    border-color: #fff;
+    outline: none;
+}
+
+.server-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #222;
+}
+
+.server-btn {
+    background: #333;
+    color: #fff;
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 2px solid transparent;
+    font-size: 14px;
+}
+
+.server-btn:focus {
+    background: #cc0000;
+    border-color: #fff;
+}
+
+.server-btn.active {
+    background: #cc0000;
+}
+
 /* Spatial Navigation: Highlight focused elements */
 #search-input:focus,
 #search-button:focus,

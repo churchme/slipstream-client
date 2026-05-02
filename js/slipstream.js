@@ -1,4 +1,5 @@
 const API_BASE = 'http://192.168.1.25:3111';
+let currentShowData = null;
 
 function logDebug(msg) {
     const table = document.getElementById('debug-table');
@@ -12,38 +13,32 @@ function logDebug(msg) {
     }
 }
 
-// Function to play video on the TV
-async function playVideo(watchPath) {
-    const resultsList = document.getElementById('results-list');
-    resultsList.innerHTML = '<h2 style="margin-top:50px;">Loading stream...</h2>';
-
+async function playVideo(epPath) {
+    logDebug(`Extracting stream for: ${epPath}`);
+    
     try {
-        const response = await fetch(`${API_BASE}/watch?path=${encodeURIComponent(watchPath)}`);
-        const { streamUrl } = await response.json();
+        // We'll create this /extract-stream endpoint next
+        const res = await fetch(`${API_BASE}/extract-stream?path=${encodeURIComponent(epPath)}`);
+        const { streamUrl } = await res.json();
 
         if (streamUrl) {
-            // Using a standard video tag; webOS 3.0+ supports HLS (.m3u8) natively
+            const resultsList = document.getElementById('results-list');
             resultsList.innerHTML = `
-                <div class="video-wrapper">
-                    <video id="main-player" controls autoplay style="width:100%; max-height:80vh;">
+                <div class="video-container">
+                    <video id="tv-player" controls autoplay style="width:100%; height:80vh;">
                         <source src="${streamUrl}" type="application/x-mpegURL">
                     </video>
-                    <div style="margin-top:20px;">
-                        <button id="back-to-search" class="nav-button" tabindex="0">Back to Search</button>
-                    </div>
+                    <button id="exit-player" class="nav-button" tabindex="0">CLOSE PLAYER</button>
                 </div>
             `;
-            // Focus the back button so the remote can immediately interact
-            document.getElementById('back-to-search').focus();
-            document.getElementById('back-to-search').addEventListener('click', () => location.reload());
+            document.getElementById('exit-player').focus();
         }
     } catch (err) {
-        resultsList.innerHTML = '<h2>Failed to load video source.</h2>';
-        console.error(err);
+        logDebug("Stream extraction failed.");
     }
 }
 
-async function showDetails(path, element) {
+async function showDetails(path, mediaId, card) {
     logDebug(`Fetching details for: ${path}`);
 
     let panel = document.getElementById('details-panel');
@@ -53,11 +48,11 @@ async function showDetails(path, element) {
     }
 
     const cards = Array.from(document.querySelectorAll('.movie-card'));
-    const index = cards.indexOf(element);
+    const index = cards.indexOf(card);
     const col = (index % 5) + 1;
 
     // Mark the selected card for the CSS "unblur"
-    element.classList.add('selected-for-details');
+    card.classList.add('selected-for-details');
     document.querySelector('.container').classList.add('blurred');
     
     panel.className = '';
@@ -66,6 +61,7 @@ async function showDetails(path, element) {
     try {
         const response = await fetch(`${API_BASE}/details?path=${encodeURIComponent(path)}`);
         const data = await response.json();
+        currentShowData = data;
 
         logDebug(`Response Status: ${response.status}`);
 
@@ -85,11 +81,31 @@ async function showDetails(path, element) {
                 </div>
 
                 <div id="selectors-area">
-                    <div id="server-picker"></div>
-                    <div id="episode-picker"></div>
                 </div>
             </div>
         `;
+
+        const selectorArea = document.getElementById('selectors-area');
+    
+        if (data.seasons && data.seasons.length > 0) {
+            selectorArea.innerHTML = `
+                <div class="selector-label">Seasons</div>
+                <div class="season-row">
+                    ${data.seasons.map(s => `
+                        <button class="season-btn" tabindex="0" data-season="${s.number}">
+                            S${s.number}
+                        </button>
+                    `).join('')}
+                </div>
+                <div id="episode-list-container"></div>
+            `;
+            
+            // Pass the actual number of the first season found (usually "1")
+            renderEpisodes(data.seasons[0].number);
+        } else {
+            logDebug("Movie mode: No seasons found.");
+            selectorArea.innerHTML = '<div class="selector-label">Movie Mode</div>';
+        }
 
         // Activate panel and blur background
         panel.classList.add('active');
@@ -122,7 +138,7 @@ const performSearch = async () => {
         if (Array.isArray(data)) {
             logDebug(`Loaded ${data.length} items`);
             resultsList.innerHTML = data.map(item => `
-                <div class="movie-card" tabindex="0" data-path="${item.href}"">
+                <div class="movie-card" tabindex="0" data-path="${item.href}" data-id="${item.id}">
                     <img src="${item.image}" alt="${item.title}">
                     <div class="card-info">
                         <h4>${item.title}</h4>
@@ -145,6 +161,45 @@ const performSearch = async () => {
     }
 };
 
+window.renderEpisodes = function(seasonNum) {
+    const container = document.getElementById('episode-list-container');
+    const eps = currentShowData.episodes[seasonNum];
+    
+    container.innerHTML = `
+        <div class="selector-label">Episodes</div>
+        <div class="episode-list">
+            ${eps.map(ep => `
+                <button class="episode-btn" tabindex="0" data-href="${ep.href}">
+                    <span class="ep-num">EP ${ep.num}:</span> ${ep.title}
+                </button>
+            `).join('')}
+        </div>
+    `;
+};
+
+window.loadServers = async function(eid, epPath) {
+    const container = document.getElementById('server-picker');
+    container.innerHTML = "<span>Loading Servers...</span>";
+
+    try {
+        const res = await fetch(`${API_BASE}/servers?eid=${eid}&path=${encodeURIComponent(epPath)}`);
+        const servers = await res.json();
+
+        container.innerHTML = `
+            <div class="selector-label">Servers</div>
+            <div class="server-row">
+                ${servers.map(s => `
+                    <button class="server-btn" tabindex="0" data-lid="${s.linkId}" data-sid="${s.id}">
+                        ${s.name}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = "<span>Servers unavailable</span>";
+    }
+};
+
 // Keyboard & D-Pad Logic
 document.addEventListener('keydown', (e) => {
     const active = document.activeElement;
@@ -160,6 +215,24 @@ document.addEventListener('keydown', (e) => {
                     cards[0].focus();
                     cards[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
                 }
+            } else if (active.id === 'watch-now') {
+                e.preventDefault();
+                const firstSeason = document.querySelector('.season-btn');
+                if (firstSeason) firstSeason.focus();
+            } 
+            else if (active.classList.contains('season-btn')) {
+                e.preventDefault();
+                const firstEp = document.querySelector('.episode-btn');
+                if (firstEp) firstEp.focus();
+            }
+            else if (active.classList.contains('episode-btn')) {
+                const eps = Array.from(document.querySelectorAll('.episode-btn'));
+                const i = eps.indexOf(active);
+                if (eps[i + 1]) {
+                    e.preventDefault();
+                    eps[i + 1].focus();
+                    eps[i + 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             } else if (currentIndex !== -1) {
                 const nextIndex = currentIndex + cols;
                 if (cards[nextIndex]) {
@@ -171,7 +244,22 @@ document.addEventListener('keydown', (e) => {
             break;
 
         case 'ArrowUp':
-            if (currentIndex !== -1) {
+            if (active.classList.contains('episode-btn')) {
+                const eps = Array.from(document.querySelectorAll('.episode-btn'));
+                const i = eps.indexOf(active);
+                if (i === 0) { // If at first episode, go up to seasons
+                    e.preventDefault();
+                    document.querySelector('.season-btn').focus();
+                } else {
+                    e.preventDefault();
+                    eps[i - 1].focus();
+                }
+            }
+            else if (active.classList.contains('season-btn')) {
+                e.preventDefault();
+                document.getElementById('watch-now').focus();
+            }
+            else if (currentIndex !== -1) {
                 const prevIndex = currentIndex - cols;
                 if (prevIndex >= 0) {
                     e.preventDefault();
@@ -190,6 +278,13 @@ document.addEventListener('keydown', (e) => {
                 if (active.selectionStart === active.value.length) {
                     document.getElementById('search-button').focus();
                 }
+            } else if (active.classList.contains('season-btn')) {
+                const seasons = Array.from(document.querySelectorAll('.season-btn'));
+                const i = seasons.indexOf(active);
+                if (seasons[i + 1]) {
+                    e.preventDefault();
+                    seasons[i + 1].focus();
+                }
             } else if (currentIndex !== -1 && cards[currentIndex + 1]) {
                 e.preventDefault();
                 cards[currentIndex + 1].focus();
@@ -199,6 +294,13 @@ document.addEventListener('keydown', (e) => {
         case 'ArrowLeft':
             if (active.id === 'search-button') {
                 document.getElementById('search-input').focus();
+            } else if (active.classList.contains('season-btn')) {
+                const seasons = Array.from(document.querySelectorAll('.season-btn'));
+                const i = seasons.indexOf(active);
+                if (seasons[i - 1]) {
+                    e.preventDefault();
+                    seasons[i - 1].focus();
+                }
             } else if (currentIndex !== -1 && cards[currentIndex - 1]) {
                 e.preventDefault();
                 cards[currentIndex - 1].focus();
@@ -208,10 +310,16 @@ document.addEventListener('keydown', (e) => {
         case 'Enter':
             if (active.id === 'search-button' || active.id === 'search-input') {
                 performSearch();
-            }
-            if (active.classList.contains('movie-card')) {
+            } else if (active.classList.contains('season-btn')) {
+                const sNum = active.getAttribute('data-season');
+                renderEpisodes(sNum);
+            } else if (active.classList.contains('episode-btn')) {
+                const href = active.getAttribute('data-href');
+                playVideo(href);
+            } else if (active.classList.contains('movie-card')) {
                 const path = active.getAttribute('data-path');
-                showDetails(path, cards[currentIndex]);
+                const mediaId = card.getAttribute('data-id');
+                showDetails(path, mediaId, cards[currentIndex]);
             }
             break;
 
@@ -228,7 +336,8 @@ document.addEventListener('keydown', (e) => {
             if (e.keyCode === 13) {
                 if (active.classList.contains('movie-card')) {
                     const path = active.getAttribute('data-path');
-                    showDetails(path, cards[currentIndex]);
+                    const mediaId = card.getAttribute('data-id');
+                    showDetails(path, mediaId, cards[currentIndex]);
                 }
             }
             break;
