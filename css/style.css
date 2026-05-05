@@ -68,7 +68,7 @@ html, body {
 #details-panel {
     position: fixed;
     top: 0;
-    width: 33%;
+    width: 40%;
     height: 100%;
     background: #0a0a0a;
     z-index: 2000;
@@ -252,8 +252,8 @@ html, body {
 .movie-card {
     display: inline-block !important; 
     position: relative !important;
-    width: 320px !important;
-    height: 520px !important;
+    width: 400px !important;
+    height: 620px !important;
     margin: 20px !important;
     border-radius: 15px;
     background: #1e1e1e;
@@ -265,7 +265,7 @@ html, body {
 
 .movie-card img {
     width: 100% !important;
-    height: 420px !important;
+    height: 500px !important;
     object-fit: cover;
     display: block;
 }

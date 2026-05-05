@@ -1,44 +1,151 @@
 const API_BASE = 'http://192.168.1.25:3111';
 let currentShowData = null;
 
-function logDebug(msg) {
-    const table = document.getElementById('debug-table');
-    if (table) {
-        const row = table.insertRow(0); // Insert at the very top
-        const cell = row.insertCell(0);
-        const now = new Date().toLocaleTimeString();
-        cell.style.padding = "10px";
-        cell.style.borderBottom = "1px solid #222";
-        cell.innerHTML = `<span style="color:#888;">[${now}]</span> ${msg}`;
-    }
+window.onerror = function(message, source, lineno, colno, error) {
+    logDebug(`CRASH: ${message} at ${source}:${lineno}`);
+};
+
+window.addEventListener('message', (event) => {
+    logDebug(`IFRAME MSG: ${JSON.stringify(event.data)}`);
+});
+
+window.addEventListener('securitypolicyviolation', (e) => {
+    logDebug(`CSP Violation: ${e.blockedURI} - ${e.violatedDirective}`);
+});
+
+// 1. Intercept 'fetch' calls
+const originalFetch = window.fetch;
+window.fetch = async (...args) => {
+    const url = args[0];
+    logDebug(`[FETCH REQUEST] -> ${url}`);
+    return originalFetch(...args);
+};
+
+// 2. Intercept 'XMLHttpRequest' (used by Hls.js and older scripts)
+const originalOpen = XMLHttpRequest.prototype.open;
+XMLHttpRequest.prototype.open = function(method, url) {
+    logDebug(`[XHR REQUEST] ${method} -> ${url}`);
+    return originalOpen.apply(this, arguments);
+};
+
+async function logDebug(msg) {
+    console.log(msg); // Local console
+    // Send to your server terminal
+    fetch(`${API_BASE}/tv-log`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level: 'info', message: msg })
+    }).catch(() => {});
 }
 
-async function playVideo(epPath) {
-    logDebug(`Extracting stream for: ${epPath}`);
-    
+async function startWatching(path) {
+    // 1. Visual feedback for the user
+    const watchBtn = document.getElementById('watch-now');
+    const originalText = watchBtn.innerText;
+    watchBtn.innerText = "LOADING...";
+    watchBtn.style.background = "#555";
+
     try {
-        // We'll create this /extract-stream endpoint next
-        const res = await fetch(`${API_BASE}/extract-stream?path=${encodeURIComponent(epPath)}`);
-        const { streamUrl } = await res.json();
-
-        if (streamUrl) {
-            const resultsList = document.getElementById('results-list');
-            resultsList.innerHTML = `
-                <div class="video-container">
-                    <video id="tv-player" controls autoplay style="width:100%; height:80vh;">
-                        <source src="${streamUrl}" type="application/x-mpegURL">
-                    </video>
-                    <button id="exit-player" class="nav-button" tabindex="0">CLOSE PLAYER</button>
-                </div>
-            `;
-            document.getElementById('exit-player').focus();
+        logDebug(`Extracting stream for: ${path}`);
+        const res = await fetch(`${API_BASE}/extract-stream?path=${encodeURIComponent(path)}`);
+        const data = await res.json();
+        
+        if (data.iframeUrl) {
+            initializePlayer(data.iframeUrl);
+        } else {
+            throw new Error("No URL returned");
         }
-    } catch (err) {
-        logDebug("Stream extraction failed.");
+    } catch (e) {
+        logDebug("Extraction failed: " + e.message);
+        watchBtn.innerText = "ERROR - RETRY?";
+        watchBtn.style.background = "red";
+    } finally {
+        // Reset button if player didn't open or after a delay
+        setTimeout(() => {
+            watchBtn.innerText = originalText;
+            watchBtn.style.background = "";
+        }, 3000);
     }
 }
 
-async function showDetails(path, mediaId, card) {
+// async function initializePlayer(directM3u8Url) {
+//     const resultsList = document.getElementById('results-list');
+//     resultsList.innerHTML = `
+//         <div class="player-wrapper" style="position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:9999;">
+//             <video id="video-player" style="width:100%;height:100%;"></video>
+//             <button id="close-player" class="nav-button" style="position:absolute;top:20px;right:20px;" tabindex="0">✕</button>
+//         </div>
+//     `;
+
+//     const video = document.getElementById('video-player');
+//     const proxiedUrl = `${API_BASE}/proxy-stream?url=${encodeURIComponent(directM3u8Url)}`;
+
+//     if (Hls.isSupported()) {
+//         const hls = new Hls({
+//             // Ensure fragments (chunks) are also proxied if they have Referer checks
+//             xhrSetup: function (xhr, url) {
+//                 // If the chunk URL is external, wrap it in our proxy
+//                 if (url.indexOf('http') === 0 && url.indexOf(API_BASE) === -1) {
+//                     const newUrl = `${API_BASE}/proxy-stream?url=${encodeURIComponent(url)}`;
+//                     xhr.open('GET', newUrl, true);
+//                 }
+//             }
+//         });
+//         hls.loadSource(proxiedUrl);
+//         hls.attachMedia(video);
+//         hls.on(Hls.Events.MANIFEST_PARSED, () => video.play());
+//     } else {
+
+//     }
+
+//     document.getElementById('close-player').focus();
+//     document.getElementById('close-player').onclick = () => location.reload();
+// }
+
+function initializePlayer(iframeUrl) {
+    logDebug(`Attempting to load Vidfast: ${iframeUrl}`);
+    // 1. Create the high-z-index overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'video-overlay';
+    // Center the video container vertically using flex
+    overlay.style = "position:fixed; top:0; left:0; width:100vw; height:100vh; background:#000; z-index:9998; display:flex; align-items:center; justify-content:center;";
+    
+    overlay.innerHTML = `
+        <div style="position: relative; padding-bottom: 56.25%; height: 0; width: 100%; max-width: 100vw;">
+          <iframe
+            src="${iframeUrl}"
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"
+            frameborder="0"
+            allowfullscreen
+            allow="autoplay; encrypted-media; gyroscope; picture-in-picture"
+            sandbox="allow-forms allow-scripts allow-pointers allow-same-origin allow-presentation"
+          ></iframe>
+        </div>
+
+        <!-- Exit button placed outside the aspect container so it's always at the top-right -->
+        <button id="exit-player" style="position:absolute; top:30px; right:30px; padding:20px; background:rgba(204, 0, 0, 0.8); color:white; border:none; border-radius:50%; font-size:24px; font-weight:bold; cursor:pointer; z-index:10001;" tabindex="0">✕</button>
+    `;
+    
+    document.body.appendChild(overlay);
+
+    const exitBtn = document.getElementById('exit-player');
+    exitBtn.focus();
+
+    exitBtn.onclick = () => {
+        document.body.removeChild(overlay);
+        // Restore focus to the watch button
+        document.getElementById('watch-now').focus();
+    };
+
+    const iframe = overlay.querySelector('iframe');
+    // Wait for iframe to load, then try to focus it
+    iframe.onload = () => {
+        iframe.focus();
+        logDebug("Iframe loaded, attempting focus for fetch clearance.");
+    };
+}
+
+async function showDetails(path, card) {
     logDebug(`Fetching details for: ${path}`);
 
     let panel = document.getElementById('details-panel');
@@ -49,14 +156,14 @@ async function showDetails(path, mediaId, card) {
 
     const cards = Array.from(document.querySelectorAll('.movie-card'));
     const index = cards.indexOf(card);
-    const col = (index % 5) + 1;
+    const col = (index % 4) + 1;
 
     // Mark the selected card for the CSS "unblur"
     card.classList.add('selected-for-details');
     document.querySelector('.container').classList.add('blurred');
     
     panel.className = '';
-    panel.classList.add(col > 3 ? 'panel-left' : 'panel-right');
+    panel.classList.add(col > 2 ? 'panel-left' : 'panel-right');
 
     try {
         const response = await fetch(`${API_BASE}/details?path=${encodeURIComponent(path)}`);
@@ -75,12 +182,17 @@ async function showDetails(path, mediaId, card) {
                 <p class="details-desc">${data.description}</p>
                 
                 <div class="details-meta-row">
-                    <div class="meta-item"><strong>Genre:</strong> ${data.genres || 'N/A'}</div>
-                    <div class="meta-item"><strong>Released:</strong> ${data.released || 'N/A'}</div>
-                    <div class="meta-item"><strong>Cast:</strong> ${data.casts || 'N/A'}</div>
+                    ${createMetaRow('Genre', data.genres)}
+                    ${createMetaRow('Year', data.year)}
+                    ${createMetaRow('Status', data.status)}
+                    ${createMetaRow('Rating', data.rating)}
+                    ${createMetaRow('Country', data.country)}
+                    ${createMetaRow('Cast', data.stars)}
                 </div>
 
                 <div id="selectors-area">
+                    <div id="server-picker"></div>
+                    <div id="episode-list-container"></div>
                 </div>
             </div>
         `;
@@ -138,7 +250,7 @@ const performSearch = async () => {
         if (Array.isArray(data)) {
             logDebug(`Loaded ${data.length} items`);
             resultsList.innerHTML = data.map(item => `
-                <div class="movie-card" tabindex="0" data-path="${item.href}" data-id="${item.id}">
+                <div class="movie-card" tabindex="0" data-path="${item.href}">
                     <img src="${item.image}" alt="${item.title}">
                     <div class="card-info">
                         <h4>${item.title}</h4>
@@ -169,7 +281,7 @@ window.renderEpisodes = function(seasonNum) {
         <div class="selector-label">Episodes</div>
         <div class="episode-list">
             ${eps.map(ep => `
-                <button class="episode-btn" tabindex="0" data-href="${ep.href}">
+                <button class="episode-btn" tabindex="0" data-path="${ep.href}">
                     <span class="ep-num">EP ${ep.num}:</span> ${ep.title}
                 </button>
             `).join('')}
@@ -177,35 +289,12 @@ window.renderEpisodes = function(seasonNum) {
     `;
 };
 
-window.loadServers = async function(eid, epPath) {
-    const container = document.getElementById('server-picker');
-    container.innerHTML = "<span>Loading Servers...</span>";
-
-    try {
-        const res = await fetch(`${API_BASE}/servers?eid=${eid}&path=${encodeURIComponent(epPath)}`);
-        const servers = await res.json();
-
-        container.innerHTML = `
-            <div class="selector-label">Servers</div>
-            <div class="server-row">
-                ${servers.map(s => `
-                    <button class="server-btn" tabindex="0" data-lid="${s.linkId}" data-sid="${s.id}">
-                        ${s.name}
-                    </button>
-                `).join('')}
-            </div>
-        `;
-    } catch (e) {
-        container.innerHTML = "<span>Servers unavailable</span>";
-    }
-};
-
 // Keyboard & D-Pad Logic
 document.addEventListener('keydown', (e) => {
     const active = document.activeElement;
     const cards = Array.from(document.querySelectorAll('.movie-card'));
     const currentIndex = cards.indexOf(active);
-    const cols = 5;
+    const cols = 4;
 
     switch (e.key) {
         case 'ArrowDown':
@@ -310,16 +399,19 @@ document.addEventListener('keydown', (e) => {
         case 'Enter':
             if (active.id === 'search-button' || active.id === 'search-input') {
                 performSearch();
+            } else if (active.id === 'watch-now') {
+                logDebug("Enter pressed");
+                const path = cards[currentIndex].getAttribute('data-path');
+                startWatching(path);
             } else if (active.classList.contains('season-btn')) {
                 const sNum = active.getAttribute('data-season');
                 renderEpisodes(sNum);
             } else if (active.classList.contains('episode-btn')) {
-                const href = active.getAttribute('data-href');
-                playVideo(href);
+                const path = active.getAttribute('data-path');
+                startWatching(path);
             } else if (active.classList.contains('movie-card')) {
                 const path = active.getAttribute('data-path');
-                const mediaId = card.getAttribute('data-id');
-                showDetails(path, mediaId, cards[currentIndex]);
+                showDetails(path, cards[currentIndex]);
             }
             break;
 
@@ -334,10 +426,21 @@ document.addEventListener('keydown', (e) => {
                 handleBackAction(e, currentIndex);
             }
             if (e.keyCode === 13) {
-                if (active.classList.contains('movie-card')) {
+                if (active.id === 'search-button' || active.id === 'search-input') {
+                    performSearch();
+                } else if (active.id === 'watch-now') {
+                    logDebug("Enter pressed");
+                    const path = cards[currentIndex].getAttribute('data-path');
+                    startWatching(path);
+                } else if (active.classList.contains('season-btn')) {
+                    const sNum = active.getAttribute('data-season');
+                    renderEpisodes(sNum);
+                } else if (active.classList.contains('episode-btn')) {
                     const path = active.getAttribute('data-path');
-                    const mediaId = card.getAttribute('data-id');
-                    showDetails(path, mediaId, cards[currentIndex]);
+                    startWatching(path);
+                } else if (active.classList.contains('movie-card')) {
+                    const path = active.getAttribute('data-path');
+                    showDetails(path, cards[currentIndex]);
                 }
             }
             break;
@@ -349,36 +452,22 @@ function handleBackAction(e, currentIndex) {
     const isPanelActive = panel && panel.classList.contains('active');
 
     if (isPanelActive) {
-        // 1. If panel is open, close it
         e.preventDefault();
         closeDetails(currentIndex);
-        logDebug("Back pressed: Closing details panel");
     } 
     else if (currentIndex !== -1) {
-        // 2. If in the grid (but no panel), go to search bar
         e.preventDefault();
         const searchInput = document.getElementById('search-input');
         searchInput.focus();
         
         const grid = document.getElementById('results-list');
         if (grid) grid.scrollTo({ top: 0, behavior: 'smooth' });
-        
-        logDebug("Back pressed: Returning to search bar");
     }
-    // 3. Otherwise, let it bubble up (allows app exit from search bar)
 }
 
-function closeDetails(currentIndex) {
-    const panel = document.getElementById('details-panel');
-    const container = document.querySelector('.container');
-    const card = document.querySelector('.selected-for-details')
-
-    if (panel) {
-        panel.classList.remove('active');
-        container.classList.remove('blurred');        
-        card.classList.remove('selected-for-details')
-        card.focus()
-    }
+function createMetaRow(label, value) {
+    if (!value || value === 'N/A' || value === '') return '';
+    return `<div class="meta-item"><strong>${label}:</strong> ${value}</div>`;
 }
 
 // Auto-focus search on launch
